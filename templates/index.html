@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ESP32 Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        color: #222;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 16px;
+      }
+
+      .card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        margin: 0 0 20px;
+        font-size: 28px;
+        text-align: center;
+      }
+
+      h2.section-title {
+        margin: 0 0 14px;
+        font-size: 22px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+
+      .item {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid #e5e7eb;
+      }
+
+      .label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 8px;
+      }
+
+      .value {
+        font-size: 26px;
+        font-weight: bold;
+      }
+
+      .status-normal {
+        color: #16a34a;
+      }
+
+      .status-warning {
+        color: #d97706;
+      }
+
+      .status-danger {
+        color: #dc2626;
+      }
+
+      .status-lost {
+        color: #6b7280;
+      }
+
+      .motor-on {
+        color: #dc2626;
+      }
+
+      .motor-off {
+        color: #2563eb;
+      }
+
+      .mode-auto {
+        color: #16a34a;
+      }
+
+      .mode-silent {
+        color: #9333ea;
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+
+      .age-box {
+        margin-top: 18px;
+        padding: 16px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+      }
+
+      .age-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      .age-row input {
+        width: 140px;
+        padding: 11px 12px;
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        font-size: 16px;
+      }
+
+      .btn-age {
+        background: #0f766e;
+        color: white;
+      }
+
+      .age-hint {
+        margin-top: 8px;
+        font-size: 14px;
+        color: #555;
+      }
+
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 12px 18px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .btn-auto {
+        background: #16a34a;
+        color: white;
+      }
+
+      .btn-silent {
+        background: #9333ea;
+        color: white;
+      }
+
+      .note {
+        margin-top: 14px;
+        font-size: 14px;
+        color: #555;
+        line-height: 1.6;
+      }
+
+      .charts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .chart-box {
+        background: #fff;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+      }
+
+      .chart-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 12px;
+      }
+
+      canvas {
+        width: 100% !important;
+        height: 300px !important;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 18px;
+      }
+
+      .info-box {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      .info-box h3 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+
+      .info-box p {
+        margin: 8px 0;
+        line-height: 1.6;
+        color: #444;
+      }
+
+      .mini-tag {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: bold;
+        margin-right: 6px;
+        margin-bottom: 6px;
+      }
+
+      .tag-normal {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .tag-warning {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .tag-danger {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .tag-lost {
+        background: #e5e7eb;
+        color: #374151;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      th,
+      td {
+        border: 1px solid #e5e7eb;
+        padding: 12px 10px;
+        text-align: left;
+        vertical-align: top;
+        font-size: 14px;
+      }
+
+      th {
+        background: #f1f5f9;
+      }
+
+      .footer {
+        text-align: center;
+        font-size: 13px;
+        color: #777;
+        margin-top: 10px;
+      }
+
+      @media (max-width: 900px) {
+        .grid,
+        .charts,
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .value {
+          font-size: 22px;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+
+        .age-row input {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>ESP32 Health Dashboard</h1>
+
+        <div class="grid">
+          <div class="item">
+            <div class="label">Trạng thái hệ thống</div>
+            <div class="value" id="status">...</div>
+          </div>
+
+          <div class="item">
+            <div class="label">Chế độ</div>
+            <div class="value" id="mode">...</div>
+          </div>
+
+          <div class="item">
+            <div class="label">Nhịp tim (BPM)</div>
+            <div class="value" id="hr">...</div>
+          </div>
+
+          <div class="item">
+            <div class="label">SpO₂ (%)</div>
+            <div class="value" id="spo2">...</div>
+          </div>
+
+          <div class="item">
+            <div class="label">Tuổi hiện tại</div>
+            <div class="value" id="age">...</div>
+          </div>
+
+          <div class="item">
+            <div class="label">Nhóm tuổi</div>
+            <div class="value" id="age_group">...</div>
+          </div>
+
+          <div class="item" style="grid-column: 1 / -1">
+            <div class="label">Motor rung</div>
+            <div class="value" id="motor">...</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-auto" onclick="setAuto()">AUTO</button>
+          <button class="btn-silent" onclick="setSilent()">SILENT</button>
+        </div>
+
+        <div class="age-box">
+          <div class="label">Điều chỉnh tuổi để áp dụng ngưỡng cảnh báo</div>
+
+          <div class="age-row">
+            <input
+              type="number"
+              id="ageInput"
+              min="1"
+              max="129"
+              placeholder="Nhập tuổi"
+            />
+            <button class="btn-age" onclick="setAge()">Cập nhật tuổi</button>
+          </div>
+
+          <div class="age-hint" id="ageMessage">
+            Nhập tuổi rồi bấm “Cập nhật tuổi”.
+          </div>
+        </div>
+
+        <div class="note">
+          <b>AUTO:</b> hệ thống tự rung khi trạng thái nguy hiểm kéo dài đủ điều
+          kiện.
+          <br />
+          <b>SILENT:</b> tắt rung và không cảnh báo bằng motor.
+          <br />
+          <b>Tuổi:</b> dùng để chọn ngưỡng nhịp tim tương ứng với nhóm tuổi.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Giải thích nhóm tuổi và mức cảnh báo</h2>
+
+        <div class="info-grid">
+          <div class="info-box">
+            <h3>Phân nhóm tuổi</h3>
+            <p><b>Trẻ em:</b> dưới 12 tuổi</p>
+            <p><b>Thiếu niên:</b> từ 12 đến 17 tuổi</p>
+            <p><b>Người lớn:</b> từ 18 đến 59 tuổi</p>
+            <p><b>Người già:</b> từ 60 tuổi trở lên</p>
+          </div>
+
+          <div class="info-box">
+            <h3>Ý nghĩa mức cảnh báo</h3>
+            <p>
+              <span class="mini-tag tag-normal">Bình thường</span> Chỉ số nằm
+              trong ngưỡng an toàn của nhóm tuổi.
+            </p>
+            <p>
+              <span class="mini-tag tag-warning">Cảnh báo</span> Chỉ số bắt đầu
+              lệch ngưỡng, cần theo dõi thêm.
+            </p>
+            <p>
+              <span class="mini-tag tag-danger">Nguy hiểm</span> Chỉ số vượt
+              ngưỡng rõ rệt, hệ thống có thể kích hoạt rung khi ở AUTO.
+            </p>
+            <p>
+              <span class="mini-tag tag-lost">Mất tín hiệu</span> Không đọc được
+              tín hiệu ổn định từ cảm biến.
+            </p>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Nhóm tuổi</th>
+              <th>Khoảng tuổi</th>
+              <th>Nhịp tim bình thường</th>
+              <th>Nhịp tim cảnh báo</th>
+              <th>Nhịp tim nguy hiểm</th>
+              <th>SpO₂ cảnh báo</th>
+              <th>SpO₂ nguy hiểm</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Trẻ em</td>
+              <td>&lt; 12</td>
+              <td>70 – 120 BPM</td>
+              <td>60 – 69 hoặc 121 – 140 BPM</td>
+              <td>&lt; 60 hoặc &gt; 140 BPM</td>
+              <td>92 – dưới 95%</td>
+              <td>&lt; 92%</td>
+            </tr>
+            <tr>
+              <td>Thiếu niên</td>
+              <td>12 – 17</td>
+              <td>60 – 110 BPM</td>
+              <td>50 – 59 hoặc 111 – 130 BPM</td>
+              <td>&lt; 50 hoặc &gt; 130 BPM</td>
+              <td>92 – dưới 95%</td>
+              <td>&lt; 92%</td>
+            </tr>
+            <tr>
+              <td>Người lớn</td>
+              <td>18 – 59</td>
+              <td>60 – 100 BPM</td>
+              <td>50 – 59 hoặc 101 – 120 BPM</td>
+              <td>&lt; 50 hoặc &gt; 120 BPM</td>
+              <td>92 – dưới 95%</td>
+              <td>&lt; 92%</td>
+            </tr>
+            <tr>
+              <td>Người già</td>
+              <td>≥ 60</td>
+              <td>60 – 100 BPM</td>
+              <td>50 – 59 hoặc 101 – 120 BPM</td>
+              <td>&lt; 50 hoặc &gt; 120 BPM</td>
+              <td>92 – dưới 95%</td>
+              <td>&lt; 92%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="note">
+          Hệ thống ưu tiên theo dõi nhịp tim theo từng nhóm tuổi, còn SpO₂ hiện
+          đang dùng chung một bộ ngưỡng cho tất cả các nhóm. Khi trạng thái
+          <b>Nguy hiểm</b> kéo dài liên tục trong chế độ <b>AUTO</b>, motor rung
+          sẽ được bật để cảnh báo.
+        </div>
+      </div>
+
+      <div class="charts">
+        <div class="chart-box">
+          <div class="chart-title">Biểu đồ nhịp tim</div>
+          <canvas id="hrChart"></canvas>
+        </div>
+
+        <div class="chart-box">
+          <div class="chart-title">Biểu đồ SpO₂</div>
+          <canvas id="spo2Chart"></canvas>
+        </div>
+      </div>
+
+      <div class="footer">Dashboard realtime qua MQTT</div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">Thanh trượt xem dữ liệu cũ</h2>
+
+      <div style="margin-bottom: 14px">
+        <div class="label">Vị trí bắt đầu</div>
+        <input
+          type="range"
+          id="startSlider"
+          min="0"
+          max="0"
+          value="0"
+          style="width: 100%"
+        />
+      </div>
+
+      <div style="margin-bottom: 14px">
+        <div class="label">Số điểm hiển thị</div>
+        <input
+          type="range"
+          id="windowSlider"
+          min="10"
+          max="200"
+          value="30"
+          style="width: 100%"
+        />
+      </div>
+
+      <div class="note" id="sliderInfo">Đang xem 0 điểm</div>
+    </div>
+
+    <script>
+      const labels = [];
+      const hrData = [];
+      const spo2Data = [];
+
+      let lastHr = null;
+      let lastSpo2 = null;
+
+      const startSlider = document.getElementById("startSlider");
+      const windowSlider = document.getElementById("windowSlider");
+      const sliderInfo = document.getElementById("sliderInfo");
+
+      const hrChart = new Chart(document.getElementById("hrChart"), {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "Heart Rate (BPM)",
+              data: [],
+              borderWidth: 2,
+              tension: 0.3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          animation: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+
+      const spo2Chart = new Chart(document.getElementById("spo2Chart"), {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "SpO₂ (%)",
+              data: [],
+              borderWidth: 2,
+              tension: 0.3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          animation: false,
+          scales: {
+            y: {
+              min: 80,
+              max: 100,
+            },
+          },
+        },
+      });
+
+      function renderVisibleChart() {
+        const total = labels.length;
+        const start = Number(startSlider.value);
+        const windowSize = Number(windowSlider.value);
+        const end = Math.min(start + windowSize, total);
+
+        const visibleLabels = labels.slice(start, end);
+        const visibleHr = hrData.slice(start, end);
+        const visibleSpo2 = spo2Data.slice(start, end);
+
+        hrChart.data.labels = visibleLabels;
+        hrChart.data.datasets[0].data = visibleHr;
+
+        spo2Chart.data.labels = visibleLabels;
+        spo2Chart.data.datasets[0].data = visibleSpo2;
+
+        hrChart.update();
+        spo2Chart.update();
+
+        sliderInfo.innerText = `Đang xem từ điểm ${start + 1} đến ${end} / ${total}`;
+      }
+
+      function updateSliderLimits(autoFollow = true) {
+        const total = labels.length;
+        const windowSize = Number(windowSlider.value);
+
+        startSlider.max = Math.max(0, total - 1);
+
+        if (autoFollow) {
+          startSlider.value = Math.max(0, total - windowSize);
+        } else {
+          const current = Number(startSlider.value);
+          if (current > total - 1) {
+            startSlider.value = Math.max(0, total - windowSize);
+          }
+        }
+      }
+
+      function setStatusStyle(text) {
+        const el = document.getElementById("status");
+        el.className = "value";
+
+        if (text === "Bình thường") el.classList.add("status-normal");
+        else if (text === "Cảnh báo") el.classList.add("status-warning");
+        else if (text === "Nguy hiểm") el.classList.add("status-danger");
+        else el.classList.add("status-lost");
+      }
+
+      function setMotorStyle(text) {
+        const el = document.getElementById("motor");
+        el.className = "value";
+        if (text === "ON") el.classList.add("motor-on");
+        else el.classList.add("motor-off");
+      }
+
+      function setModeStyle(text) {
+        const el = document.getElementById("mode");
+        el.className = "value";
+        if (text === "AUTO") el.classList.add("mode-auto");
+        else el.classList.add("mode-silent");
+      }
+
+      function updateCharts(hr, spo2) {
+        if (hr === lastHr && spo2 === lastSpo2) return;
+
+        const wasAtEnd =
+          Number(startSlider.value) + Number(windowSlider.value) >=
+          labels.length;
+
+        lastHr = hr;
+        lastSpo2 = spo2;
+
+        const time = new Date().toLocaleTimeString();
+
+        labels.push(time);
+        hrData.push(hr);
+        spo2Data.push(spo2);
+
+        updateSliderLimits(wasAtEnd);
+        renderVisibleChart();
+      }
+
+      startSlider.addEventListener("input", renderVisibleChart);
+      windowSlider.addEventListener("input", () => {
+        updateSliderLimits(false);
+        renderVisibleChart();
+      });
+
+      async function loadData() {
+        try {
+          const res = await fetch("/api/data/");
+          const data = await res.json();
+
+          const status = data.status || "Mất tín hiệu";
+          const mode = data.mode || "AUTO";
+          const motor = data.motor || "OFF";
+          const hr = Number(data.heart_rate ?? 0);
+          const spo2 = Number(data.spo2 ?? 0);
+          const age = Number(data.age ?? 0);
+          const ageGroup = data.age_group || "...";
+
+          document.getElementById("status").innerText = status;
+          document.getElementById("mode").innerText = mode;
+          document.getElementById("hr").innerText = hr;
+          document.getElementById("spo2").innerText = spo2;
+          document.getElementById("motor").innerText = motor;
+          document.getElementById("age").innerText = age || "...";
+          document.getElementById("age_group").innerText = ageGroup;
+
+          const ageInput = document.getElementById("ageInput");
+          if (age && document.activeElement !== ageInput) {
+            ageInput.value = age;
+          }
+
+          setStatusStyle(status);
+          setMotorStyle(motor);
+          setModeStyle(mode);
+
+          updateCharts(hr, spo2);
+        } catch (err) {
+          document.getElementById("status").innerText = "Mất kết nối web";
+          setStatusStyle("Mất tín hiệu");
+        }
+      }
+
+      async function setAuto() {
+        await fetch("/mode/auto/");
+      }
+
+      async function setSilent() {
+        await fetch("/mode/silent/");
+      }
+
+      async function setAge() {
+        const ageInput = document.getElementById("ageInput");
+        const ageMessage = document.getElementById("ageMessage");
+        const age = Number(ageInput.value);
+
+        if (!age || age < 1 || age > 129) {
+          ageMessage.innerText = "Tuổi không hợp lệ. Hãy nhập từ 1 đến 129.";
+          return;
+        }
+
+        try {
+          const res = await fetch(`/set-age/${age}/`);
+          const data = await res.json();
+
+          if (data.ok) {
+            ageMessage.innerText = `Đã cập nhật tuổi = ${age}.`;
+            await loadData();
+          } else {
+            ageMessage.innerText = "Không cập nhật được tuổi.";
+          }
+        } catch (err) {
+          ageMessage.innerText = "Lỗi khi gửi tuổi lên server.";
+        }
+      }
+
+      loadData();
+      setInterval(loadData, 1000);
+    </script>
+  </body>
+</html>
