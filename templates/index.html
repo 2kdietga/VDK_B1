@@ -177,6 +177,8 @@
         border-radius: 16px;
         padding: 16px;
         box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+        min-width: 0;
+        overflow: hidden;
       }
 
       .chart-title {
@@ -185,8 +187,21 @@
         margin-bottom: 12px;
       }
 
+      .chart-scroll {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 8px;
+      }
+
+      .chart-inner {
+        height: 300px;
+        min-width: 100%;
+      }
+
       canvas {
-        width: 100% !important;
+        display: block;
         height: 300px !important;
       }
 
@@ -467,45 +482,24 @@
       <div class="charts">
         <div class="chart-box">
           <div class="chart-title">Biểu đồ nhịp tim</div>
-          <canvas id="hrChart"></canvas>
+          <div class="chart-scroll" id="hrScroll">
+            <div class="chart-inner" id="hrChartWrap">
+              <canvas id="hrChart"></canvas>
+            </div>
+          </div>
         </div>
 
         <div class="chart-box">
           <div class="chart-title">Biểu đồ SpO₂</div>
-          <canvas id="spo2Chart"></canvas>
+          <div class="chart-scroll" id="spo2Scroll">
+            <div class="chart-inner" id="spo2ChartWrap">
+              <canvas id="spo2Chart"></canvas>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="footer">Dashboard realtime qua MQTT</div>
-    </div>
-    <div class="card">
-      <h2 class="section-title">Thanh trượt xem dữ liệu cũ</h2>
-
-      <div style="margin-bottom: 14px">
-        <div class="label">Vị trí bắt đầu</div>
-        <input
-          type="range"
-          id="startSlider"
-          min="0"
-          max="0"
-          value="0"
-          style="width: 100%"
-        />
-      </div>
-
-      <div style="margin-bottom: 14px">
-        <div class="label">Số điểm hiển thị</div>
-        <input
-          type="range"
-          id="windowSlider"
-          min="10"
-          max="200"
-          value="30"
-          style="width: 100%"
-        />
-      </div>
-
-      <div class="note" id="sliderInfo">Đang xem 0 điểm</div>
     </div>
 
     <script>
@@ -516,18 +510,39 @@
       let lastHr = null;
       let lastSpo2 = null;
 
-      const startSlider = document.getElementById("startSlider");
-      const windowSlider = document.getElementById("windowSlider");
-      const sliderInfo = document.getElementById("sliderInfo");
+      const hrScroll = document.getElementById("hrScroll");
+      const spo2Scroll = document.getElementById("spo2Scroll");
+      const hrChartWrap = document.getElementById("hrChartWrap");
+      const spo2ChartWrap = document.getElementById("spo2ChartWrap");
+
+      const VISIBLE_POINTS = 20; // số điểm vừa khung chart
+      const POINT_WIDTH = 35; // độ rộng mỗi điểm
+      const BASE_WIDTH = 600; // chiều rộng khung ban đầu
+
+      function isNearRightEdge(el) {
+        return el.scrollLeft + el.clientWidth >= el.scrollWidth - 20;
+      }
+
+      function scrollToRight(el) {
+        el.scrollLeft = el.scrollWidth;
+      }
+
+      function updateChartWidth() {
+        const extraPoints = Math.max(0, labels.length - VISIBLE_POINTS);
+        const newWidth = BASE_WIDTH + extraPoints * POINT_WIDTH;
+
+        hrChartWrap.style.width = newWidth + "px";
+        spo2ChartWrap.style.width = newWidth + "px";
+      }
 
       const hrChart = new Chart(document.getElementById("hrChart"), {
         type: "line",
         data: {
-          labels: [],
+          labels: labels,
           datasets: [
             {
               label: "Heart Rate (BPM)",
-              data: [],
+              data: hrData,
               borderWidth: 2,
               tension: 0.3,
             },
@@ -535,8 +550,15 @@
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           animation: false,
           scales: {
+            x: {
+              ticks: {
+                maxRotation: 0,
+                autoSkip: true,
+              },
+            },
             y: {
               beginAtZero: true,
             },
@@ -547,11 +569,11 @@
       const spo2Chart = new Chart(document.getElementById("spo2Chart"), {
         type: "line",
         data: {
-          labels: [],
+          labels: labels,
           datasets: [
             {
               label: "SpO₂ (%)",
-              data: [],
+              data: spo2Data,
               borderWidth: 2,
               tension: 0.3,
             },
@@ -559,8 +581,15 @@
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           animation: false,
           scales: {
+            x: {
+              ticks: {
+                maxRotation: 0,
+                autoSkip: true,
+              },
+            },
             y: {
               min: 80,
               max: 100,
@@ -568,44 +597,6 @@
           },
         },
       });
-
-      function renderVisibleChart() {
-        const total = labels.length;
-        const start = Number(startSlider.value);
-        const windowSize = Number(windowSlider.value);
-        const end = Math.min(start + windowSize, total);
-
-        const visibleLabels = labels.slice(start, end);
-        const visibleHr = hrData.slice(start, end);
-        const visibleSpo2 = spo2Data.slice(start, end);
-
-        hrChart.data.labels = visibleLabels;
-        hrChart.data.datasets[0].data = visibleHr;
-
-        spo2Chart.data.labels = visibleLabels;
-        spo2Chart.data.datasets[0].data = visibleSpo2;
-
-        hrChart.update();
-        spo2Chart.update();
-
-        sliderInfo.innerText = `Đang xem từ điểm ${start + 1} đến ${end} / ${total}`;
-      }
-
-      function updateSliderLimits(autoFollow = true) {
-        const total = labels.length;
-        const windowSize = Number(windowSlider.value);
-
-        startSlider.max = Math.max(0, total - 1);
-
-        if (autoFollow) {
-          startSlider.value = Math.max(0, total - windowSize);
-        } else {
-          const current = Number(startSlider.value);
-          if (current > total - 1) {
-            startSlider.value = Math.max(0, total - windowSize);
-          }
-        }
-      }
 
       function setStatusStyle(text) {
         const el = document.getElementById("status");
@@ -634,9 +625,8 @@
       function updateCharts(hr, spo2) {
         if (hr === lastHr && spo2 === lastSpo2) return;
 
-        const wasAtEnd =
-          Number(startSlider.value) + Number(windowSlider.value) >=
-          labels.length;
+        const followHr = isNearRightEdge(hrScroll);
+        const followSpo2 = isNearRightEdge(spo2Scroll);
 
         lastHr = hr;
         lastSpo2 = spo2;
@@ -647,15 +637,14 @@
         hrData.push(hr);
         spo2Data.push(spo2);
 
-        updateSliderLimits(wasAtEnd);
-        renderVisibleChart();
-      }
+        updateChartWidth();
 
-      startSlider.addEventListener("input", renderVisibleChart);
-      windowSlider.addEventListener("input", () => {
-        updateSliderLimits(false);
-        renderVisibleChart();
-      });
+        hrChart.update();
+        spo2Chart.update();
+
+        if (followHr) scrollToRight(hrScroll);
+        if (followSpo2) scrollToRight(spo2Scroll);
+      }
 
       async function loadData() {
         try {
@@ -727,6 +716,7 @@
         }
       }
 
+      updateChartWidth();
       loadData();
       setInterval(loadData, 1000);
     </script>
