@@ -12,6 +12,7 @@ latest_data = {
     "mode": "AUTO",
     "age": 65,
     "age_group": "Người già",
+    "device_status": "OFFLINE",
 }
 
 data_lock = threading.Lock()
@@ -26,6 +27,7 @@ TOPIC_DATA = "esp32/max30100/data"
 TOPIC_MOTOR_STATUS = "esp32/motor/status"
 TOPIC_MOTOR_MODE = "esp32/motor/mode"
 TOPIC_PROFILE_AGE = "esp32/profile/age"
+TOPIC_STATUS = "esp32/max30100/status"
 
 
 def on_connect(client, userdata, flags, rc, properties=None):
@@ -36,6 +38,7 @@ def on_connect(client, userdata, flags, rc, properties=None):
         client.subscribe(TOPIC_MOTOR_STATUS)
         client.subscribe(TOPIC_MOTOR_MODE)
         client.subscribe(TOPIC_PROFILE_AGE)
+        client.subscribe(TOPIC_STATUS)
         print("Đã subscribe topic")
     else:
         print("MQTT connection failed with code:", rc)
@@ -70,6 +73,14 @@ def on_message(client, userdata, msg):
                     latest_data["age"] = age
             except ValueError:
                 print("Tuổi không hợp lệ:", payload_text)
+        elif msg.topic == TOPIC_STATUS:
+            if payload_text.upper() == "ONLINE":
+                latest_data["device_status"] = "ONLINE"
+            elif payload_text.upper() == "OFFLINE":
+                latest_data["device_status"] = "OFFLINE"
+                latest_data["heart_rate"] = 0
+                latest_data["spo2"] = 0
+                latest_data["motor"] = "OFF"  
 
 
 def start_mqtt():

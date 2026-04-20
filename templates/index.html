@@ -82,6 +82,18 @@
         color: #6b7280;
       }
 
+      .device-online {
+        color: #16a34a;
+      }
+
+      .device-offline {
+        color: #dc2626;
+      }
+
+      .device-unknown {
+        color: #6b7280;
+      }
+
       .motor-on {
         color: #dc2626;
       }
@@ -317,6 +329,11 @@
 
         <div class="grid">
           <div class="item">
+            <div class="label">ESP32</div>
+            <div class="value" id="device_status">...</div>
+          </div>
+
+          <div class="item">
             <div class="label">Trạng thái hệ thống</div>
             <div class="value" id="status">...</div>
           </div>
@@ -324,6 +341,11 @@
           <div class="item">
             <div class="label">Chế độ</div>
             <div class="value" id="mode">...</div>
+          </div>
+
+          <div class="item">
+            <div class="label">Motor rung</div>
+            <div class="value" id="motor">...</div>
           </div>
 
           <div class="item">
@@ -344,11 +366,6 @@
           <div class="item">
             <div class="label">Nhóm tuổi</div>
             <div class="value" id="age_group">...</div>
-          </div>
-
-          <div class="item" style="grid-column: 1 / -1">
-            <div class="label">Motor rung</div>
-            <div class="value" id="motor">...</div>
           </div>
         </div>
 
@@ -377,6 +394,10 @@
         </div>
 
         <div class="note">
+          <b>ESP32 ONLINE:</b> thiết bị đang kết nối MQTT bình thường.
+          <br />
+          <b>ESP32 OFFLINE:</b> thiết bị mất kết nối, mất nguồn hoặc mất Wi-Fi.
+          <br />
           <b>AUTO:</b> hệ thống tự rung khi trạng thái nguy hiểm kéo dài đủ điều
           kiện.
           <br />
@@ -515,9 +536,9 @@
       const hrChartWrap = document.getElementById("hrChartWrap");
       const spo2ChartWrap = document.getElementById("spo2ChartWrap");
 
-      const VISIBLE_POINTS = 20; // số điểm vừa khung chart
-      const POINT_WIDTH = 35; // độ rộng mỗi điểm
-      const BASE_WIDTH = 600; // chiều rộng khung ban đầu
+      const VISIBLE_POINTS = 20;
+      const POINT_WIDTH = 35;
+      const BASE_WIDTH = 600;
 
       function isNearRightEdge(el) {
         return el.scrollLeft + el.clientWidth >= el.scrollWidth - 20;
@@ -608,6 +629,15 @@
         else el.classList.add("status-lost");
       }
 
+      function setDeviceStatusStyle(text) {
+        const el = document.getElementById("device_status");
+        el.className = "value";
+
+        if (text === "ONLINE") el.classList.add("device-online");
+        else if (text === "OFFLINE") el.classList.add("device-offline");
+        else el.classList.add("device-unknown");
+      }
+
       function setMotorStyle(text) {
         const el = document.getElementById("motor");
         el.className = "value";
@@ -622,7 +652,8 @@
         else el.classList.add("mode-silent");
       }
 
-      function updateCharts(hr, spo2) {
+      function updateCharts(hr, spo2, deviceStatus) {
+        if (deviceStatus !== "ONLINE") return;
         if (hr === lastHr && spo2 === lastSpo2) return;
 
         const followHr = isNearRightEdge(hrScroll);
@@ -651,6 +682,7 @@
           const res = await fetch("/api/data/");
           const data = await res.json();
 
+          const deviceStatus = (data.device_status || "OFFLINE").toUpperCase();
           const status = data.status || "Mất tín hiệu";
           const mode = data.mode || "AUTO";
           const motor = data.motor || "OFF";
@@ -659,6 +691,7 @@
           const age = Number(data.age ?? 0);
           const ageGroup = data.age_group || "...";
 
+          document.getElementById("device_status").innerText = deviceStatus;
           document.getElementById("status").innerText = status;
           document.getElementById("mode").innerText = mode;
           document.getElementById("hr").innerText = hr;
@@ -672,13 +705,16 @@
             ageInput.value = age;
           }
 
+          setDeviceStatusStyle(deviceStatus);
           setStatusStyle(status);
           setMotorStyle(motor);
           setModeStyle(mode);
 
-          updateCharts(hr, spo2);
+          updateCharts(hr, spo2, deviceStatus);
         } catch (err) {
+          document.getElementById("device_status").innerText = "OFFLINE";
           document.getElementById("status").innerText = "Mất kết nối web";
+          setDeviceStatusStyle("OFFLINE");
           setStatusStyle("Mất tín hiệu");
         }
       }
