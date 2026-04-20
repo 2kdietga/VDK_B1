@@ -13,6 +13,14 @@ def mode_silent(request):
     publish_mode("SILENT")
     return JsonResponse({"ok": True, "mode": "SILENT"})
 
+def led_mode_on(request):
+    publish_mode("ON")
+    return JsonResponse({"ok": True, "led_mode": "ON"})
+
+def led_mode_off(request):
+    publish_mode("OFF")
+    return JsonResponse({"ok": True, "led_mode": "OFF"})
+
 def api_data(request):
     return JsonResponse(latest_data)
 

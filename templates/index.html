@@ -18,7 +18,7 @@
       }
 
       .container {
-        max-width: 1100px;
+        max-width: 1180px;
         margin: 30px auto;
         padding: 16px;
       }
@@ -42,16 +42,36 @@
         font-size: 22px;
       }
 
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr 1fr;
+        gap: 18px;
+      }
+
+      .panel {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .panel-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 14px;
+        color: #111827;
+      }
+
       .grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
+        grid-template-columns: 1fr;
+        gap: 12px;
       }
 
       .item {
-        background: #f8fafc;
+        background: #fff;
         border-radius: 12px;
-        padding: 16px;
+        padding: 14px 16px;
         border: 1px solid #e5e7eb;
       }
 
@@ -62,8 +82,10 @@
       }
 
       .value {
-        font-size: 26px;
+        font-size: 24px;
         font-weight: bold;
+        line-height: 1.2;
+        word-break: break-word;
       }
 
       .status-normal {
@@ -110,11 +132,148 @@
         color: #9333ea;
       }
 
-      .actions {
-        display: flex;
-        gap: 12px;
+      .led-on {
+        color: #f59e0b;
+      }
+
+      .led-off {
+        color: #64748b;
+      }
+
+      .led-auto {
+        color: #0f766e;
+      }
+
+      .led-manual {
+        color: #7c3aed;
+      }
+
+      .led-unknown {
+        color: #6b7280;
+      }
+
+      .controls-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
         margin-top: 18px;
+      }
+
+      .switch-card {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .switch-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #111827;
+      }
+
+      .switch-subtitle {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 12px;
+      }
+
+      .switch-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
         flex-wrap: wrap;
+      }
+
+      .switch-label {
+        font-size: 15px;
+        font-weight: 700;
+        min-width: 58px;
+        text-align: center;
+      }
+
+      .switch-label.left-active {
+        color: #16a34a;
+      }
+
+      .switch-label.right-active {
+        color: #9333ea;
+      }
+
+      .switch-label.led-left-active {
+        color: #f59e0b;
+      }
+
+      .switch-label.led-right-active {
+        color: #64748b;
+      }
+
+      .toggle {
+        position: relative;
+        width: 72px;
+        height: 38px;
+        flex: 0 0 auto;
+      }
+
+      .toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+      }
+
+      .slider {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        background-color: #cbd5e1;
+        transition: 0.25s;
+        border-radius: 999px;
+      }
+
+      .slider:before {
+        content: "";
+        position: absolute;
+        height: 30px;
+        width: 30px;
+        left: 4px;
+        top: 4px;
+        background: white;
+        transition: 0.25s;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      }
+
+      #motorToggle:checked + .slider {
+        background-color: #9333ea;
+      }
+
+      #ledToggle:checked + .slider {
+        background-color: #64748b;
+      }
+
+      #motorToggle:not(:checked) + .slider {
+        background-color: #16a34a;
+      }
+
+      #ledToggle:not(:checked) + .slider {
+        background-color: #f59e0b;
+      }
+
+      .toggle input:checked + .slider:before {
+        transform: translateX(34px);
+      }
+
+      .toggle input:disabled + .slider {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .toggle-status {
+        font-size: 14px;
+        color: #555;
+        margin-top: 10px;
       }
 
       .age-box {
@@ -161,13 +320,8 @@
         cursor: pointer;
       }
 
-      .btn-auto {
-        background: #16a34a;
-        color: white;
-      }
-
-      .btn-silent {
-        background: #9333ea;
+      .btn-age {
+        background: #0f766e;
         color: white;
       }
 
@@ -300,8 +454,9 @@
         margin-top: 10px;
       }
 
-      @media (max-width: 900px) {
-        .grid,
+      @media (max-width: 980px) {
+        .dashboard-grid,
+        .controls-grid,
         .charts,
         .info-grid {
           grid-template-columns: 1fr;
@@ -327,51 +482,113 @@
       <div class="card">
         <h1>ESP32 Health Dashboard</h1>
 
-        <div class="grid">
-          <div class="item">
-            <div class="label">ESP32</div>
-            <div class="value" id="device_status">...</div>
+        <div class="dashboard-grid">
+          <div class="panel">
+            <div class="panel-title">Kết nối & điều khiển</div>
+            <div class="grid">
+              <div class="item">
+                <div class="label">ESP32</div>
+                <div class="value" id="device_status">...</div>
+              </div>
+
+              <div class="item">
+                <div class="label">Trạng thái hệ thống</div>
+                <div class="value" id="status">...</div>
+              </div>
+
+              <div class="item">
+                <div class="label">Chế độ motor</div>
+                <div class="value" id="mode">...</div>
+              </div>
+
+              <div class="item">
+                <div class="label">Motor rung</div>
+                <div class="value" id="motor">...</div>
+              </div>
+
+              <div class="item">
+                <div class="label">Chế độ LED</div>
+                <div class="value" id="led_mode">...</div>
+              </div>
+
+              <div class="item">
+                <div class="label">LED</div>
+                <div class="value" id="led">...</div>
+              </div>
+            </div>
           </div>
 
-          <div class="item">
-            <div class="label">Trạng thái hệ thống</div>
-            <div class="value" id="status">...</div>
+          <div class="panel">
+            <div class="panel-title">Chỉ số sức khỏe</div>
+            <div class="grid">
+              <div class="item">
+                <div class="label">Nhịp tim (BPM)</div>
+                <div class="value" id="hr">...</div>
+              </div>
+
+              <div class="item">
+                <div class="label">SpO₂ (%)</div>
+                <div class="value" id="spo2">...</div>
+              </div>
+            </div>
           </div>
 
-          <div class="item">
-            <div class="label">Chế độ</div>
-            <div class="value" id="mode">...</div>
-          </div>
+          <div class="panel">
+            <div class="panel-title">Thông tin hồ sơ</div>
+            <div class="grid">
+              <div class="item">
+                <div class="label">Tuổi hiện tại</div>
+                <div class="value" id="age">...</div>
+              </div>
 
-          <div class="item">
-            <div class="label">Motor rung</div>
-            <div class="value" id="motor">...</div>
-          </div>
-
-          <div class="item">
-            <div class="label">Nhịp tim (BPM)</div>
-            <div class="value" id="hr">...</div>
-          </div>
-
-          <div class="item">
-            <div class="label">SpO₂ (%)</div>
-            <div class="value" id="spo2">...</div>
-          </div>
-
-          <div class="item">
-            <div class="label">Tuổi hiện tại</div>
-            <div class="value" id="age">...</div>
-          </div>
-
-          <div class="item">
-            <div class="label">Nhóm tuổi</div>
-            <div class="value" id="age_group">...</div>
+              <div class="item">
+                <div class="label">Nhóm tuổi</div>
+                <div class="value" id="age_group">...</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="actions">
-          <button class="btn-auto" onclick="setAuto()">AUTO</button>
-          <button class="btn-silent" onclick="setSilent()">SILENT</button>
+        <div class="controls-grid">
+          <div class="switch-card">
+            <div class="switch-title">Điều khiển motor mode</div>
+            <div class="switch-subtitle">
+              Gạt trái = AUTO, gạt phải = SILENT
+            </div>
+            <div class="switch-row">
+              <span class="switch-label" id="motorLeftLabel">AUTO</span>
+              <label class="toggle">
+                <input
+                  type="checkbox"
+                  id="motorToggle"
+                  onchange="handleMotorToggle()"
+                />
+                <span class="slider"></span>
+              </label>
+              <span class="switch-label" id="motorRightLabel">SILENT</span>
+            </div>
+            <div class="toggle-status" id="motorToggleText">
+              Đang đồng bộ...
+            </div>
+          </div>
+
+          <div class="switch-card">
+            <div class="switch-title">Điều khiển LED mode</div>
+            <div class="switch-subtitle">Gạt trái = ON, gạt phải = OFF</div>
+            <div class="switch-row">
+              <span class="switch-label" id="ledLeftLabel">ON</span>
+              <label class="toggle">
+                <input
+                  type="checkbox"
+                  id="ledToggle"
+                  onchange="handleLedToggle()"
+                />
+                <span class="slider"></span>
+              </label>
+              <span class="switch-label" id="ledRightLabel">OFF</span>
+            </div>
+            <div class="toggle-status" id="ledToggleText">Đang đồng bộ...</div>
+          </div>
         </div>
 
         <div class="age-box">
@@ -398,10 +615,12 @@
           <br />
           <b>ESP32 OFFLINE:</b> thiết bị mất kết nối, mất nguồn hoặc mất Wi-Fi.
           <br />
-          <b>AUTO:</b> hệ thống tự rung khi trạng thái nguy hiểm kéo dài đủ điều
-          kiện.
+          <b>Motor mode:</b> AUTO thì hệ thống tự rung khi đủ điều kiện, SILENT
+          thì không rung.
           <br />
-          <b>SILENT:</b> tắt rung và không cảnh báo bằng motor.
+          <b>LED mode:</b> ON/OFF dùng để điều khiển chế độ LED follow theo
+          motor status ( nếu motor đang hoạt động thì LED sẽ bật, ngược lại thì
+          LED sẽ tắt ).
           <br />
           <b>Tuổi:</b> dùng để chọn ngưỡng nhịp tim tương ứng với nhóm tuổi.
         </div>
@@ -530,6 +749,8 @@
 
       let lastHr = null;
       let lastSpo2 = null;
+      let syncingMotorToggle = false;
+      let syncingLedToggle = false;
 
       const hrScroll = document.getElementById("hrScroll");
       const spo2Scroll = document.getElementById("spo2Scroll");
@@ -652,6 +873,109 @@
         else el.classList.add("mode-silent");
       }
 
+      function setLedStyle(text) {
+        const el = document.getElementById("led");
+        el.className = "value";
+        if (text === "ON") el.classList.add("led-on");
+        else if (text === "OFF") el.classList.add("led-off");
+        else el.classList.add("led-unknown");
+      }
+
+      function setLedModeStyle(text) {
+        const el = document.getElementById("led_mode");
+        el.className = "value";
+
+        if (text === "ON") el.classList.add("led-on");
+        else if (text === "OFF") el.classList.add("led-off");
+        else el.classList.add("led-unknown");
+      }
+
+      function syncMotorToggle(mode) {
+        const toggle = document.getElementById("motorToggle");
+        const leftLabel = document.getElementById("motorLeftLabel");
+        const rightLabel = document.getElementById("motorRightLabel");
+        const text = document.getElementById("motorToggleText");
+
+        syncingMotorToggle = true;
+        toggle.checked = mode === "SILENT";
+        syncingMotorToggle = false;
+
+        leftLabel.className = "switch-label";
+        rightLabel.className = "switch-label";
+
+        if (mode === "AUTO") {
+          leftLabel.classList.add("left-active");
+          text.innerText = "Motor mode hiện tại: AUTO";
+        } else if (mode === "SILENT") {
+          rightLabel.classList.add("right-active");
+          text.innerText = "Motor mode hiện tại: SILENT";
+        } else {
+          text.innerText = "Motor mode hiện tại: không xác định";
+        }
+      }
+
+      function syncLedToggle(ledMode) {
+        const toggle = document.getElementById("ledToggle");
+        const leftLabel = document.getElementById("ledLeftLabel");
+        const rightLabel = document.getElementById("ledRightLabel");
+        const text = document.getElementById("ledToggleText");
+
+        syncingLedToggle = true;
+        toggle.checked = ledMode === "OFF";
+        syncingLedToggle = false;
+
+        leftLabel.className = "switch-label";
+        rightLabel.className = "switch-label";
+
+        if (ledMode === "ON") {
+          leftLabel.classList.add("led-left-active");
+          text.innerText = "LED mode hiện tại: ON";
+        } else if (ledMode === "OFF") {
+          rightLabel.classList.add("led-right-active");
+          text.innerText = "LED mode hiện tại: OFF";
+        } else {
+          text.innerText = "LED mode hiện tại: không xác định";
+        }
+      }
+
+      async function handleMotorToggle() {
+        if (syncingMotorToggle) return;
+
+        const toggle = document.getElementById("motorToggle");
+        toggle.disabled = true;
+
+        try {
+          if (toggle.checked) {
+            await fetch("/mode/silent/");
+          } else {
+            await fetch("/mode/auto/");
+          }
+        } finally {
+          setTimeout(() => {
+            toggle.disabled = false;
+          }, 400);
+        }
+      }
+
+      async function handleLedToggle() {
+        if (syncingLedToggle) return;
+
+        const toggle = document.getElementById("ledToggle");
+        toggle.disabled = true;
+
+        try {
+          if (toggle.checked) {
+            await fetch("/led-mode/off/");
+          } else {
+            await fetch("/led-mode/on/");
+          }
+        } finally {
+          setTimeout(() => {
+            toggle.disabled = false;
+          }, 400);
+        }
+      }
+
       function updateCharts(hr, spo2, deviceStatus) {
         if (deviceStatus !== "ONLINE") return;
         if (hr === lastHr && spo2 === lastSpo2) return;
@@ -684,8 +1008,10 @@
 
           const deviceStatus = (data.device_status || "OFFLINE").toUpperCase();
           const status = data.status || "Mất tín hiệu";
-          const mode = data.mode || "AUTO";
-          const motor = data.motor || "OFF";
+          const mode = (data.mode || "AUTO").toUpperCase();
+          const motor = (data.motor || "OFF").toUpperCase();
+          const ledMode = (data.led_mode || "OFF").toUpperCase();
+          const led = (data.led || "OFF").toUpperCase();
           const hr = Number(data.heart_rate ?? 0);
           const spo2 = Number(data.spo2 ?? 0);
           const age = Number(data.age ?? 0);
@@ -694,9 +1020,11 @@
           document.getElementById("device_status").innerText = deviceStatus;
           document.getElementById("status").innerText = status;
           document.getElementById("mode").innerText = mode;
+          document.getElementById("motor").innerText = motor;
+          document.getElementById("led_mode").innerText = ledMode;
+          document.getElementById("led").innerText = led;
           document.getElementById("hr").innerText = hr;
           document.getElementById("spo2").innerText = spo2;
-          document.getElementById("motor").innerText = motor;
           document.getElementById("age").innerText = age || "...";
           document.getElementById("age_group").innerText = ageGroup;
 
@@ -707,24 +1035,26 @@
 
           setDeviceStatusStyle(deviceStatus);
           setStatusStyle(status);
-          setMotorStyle(motor);
           setModeStyle(mode);
+          setMotorStyle(motor);
+          setLedModeStyle(ledMode);
+          setLedStyle(led);
+          syncMotorToggle(mode);
+          syncLedToggle(ledMode);
 
           updateCharts(hr, spo2, deviceStatus);
         } catch (err) {
           document.getElementById("device_status").innerText = "OFFLINE";
           document.getElementById("status").innerText = "Mất kết nối web";
+          document.getElementById("led_mode").innerText = "OFF";
+          document.getElementById("led").innerText = "OFF";
           setDeviceStatusStyle("OFFLINE");
           setStatusStyle("Mất tín hiệu");
+          setLedModeStyle("OFF");
+          setLedStyle("OFF");
+          syncMotorToggle("AUTO");
+          syncLedToggle("OFF");
         }
-      }
-
-      async function setAuto() {
-        await fetch("/mode/auto/");
-      }
-
-      async function setSilent() {
-        await fetch("/mode/silent/");
       }
 
       async function setAge() {

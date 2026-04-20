@@ -13,6 +13,8 @@ latest_data = {
     "age": 65,
     "age_group": "Người già",
     "device_status": "OFFLINE",
+    "led_mode": "OFF",
+    "led": "OFF",
 }
 
 data_lock = threading.Lock()
@@ -28,6 +30,8 @@ TOPIC_MOTOR_STATUS = "esp32/motor/status"
 TOPIC_MOTOR_MODE = "esp32/motor/mode"
 TOPIC_PROFILE_AGE = "esp32/profile/age"
 TOPIC_STATUS = "esp32/max30100/status"
+TOPIC_LED_MODE = "esp32/led/mode"
+TOPIC_LED_STATUS = "esp32/led/status"
 
 
 def on_connect(client, userdata, flags, rc, properties=None):
@@ -81,6 +85,10 @@ def on_message(client, userdata, msg):
                 latest_data["heart_rate"] = 0
                 latest_data["spo2"] = 0
                 latest_data["motor"] = "OFF"  
+        elif msg.topic == TOPIC_LED_MODE:
+            latest_data["led_mode"] = payload_text
+        elif msg.topic == TOPIC_LED_STATUS:
+            latest_data["led"] = payload_text
 
 
 def start_mqtt():
