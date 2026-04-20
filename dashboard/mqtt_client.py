@@ -75,7 +75,7 @@ def on_message(client, userdata, msg):
         elif msg.topic == TOPIC_PROFILE_AGE:
             try:
                 age = int(payload_text)
-                if 0 < age < 130:
+                if 0 <= age < 130:
                     latest_data["age"] = age
             except ValueError:
                 print("Tuổi không hợp lệ:", payload_text)
@@ -133,7 +133,7 @@ def publish_age(age: int):
     if not isinstance(age, int):
         return False
 
-    if age <= 0 or age >= 130:
+    if age < 0 or age >= 130:
         return False
 
     mqtt_client.publish(TOPIC_PROFILE_AGE, str(age), retain=True)

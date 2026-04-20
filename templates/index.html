@@ -632,6 +632,9 @@
         <div class="info-grid">
           <div class="info-box">
             <h3>Phân nhóm tuổi</h3>
+            <p>
+              <b>Test Mode: </b> 0 tuổi ( dùng để demo trạng thái nguy hiểm)
+            </p>
             <p><b>Trẻ em:</b> dưới 12 tuổi</p>
             <p><b>Thiếu niên:</b> từ 12 đến 17 tuổi</p>
             <p><b>Người lớn:</b> từ 18 đến 59 tuổi</p>
@@ -1060,9 +1063,10 @@
       async function setAge() {
         const ageInput = document.getElementById("ageInput");
         const ageMessage = document.getElementById("ageMessage");
+
         const age = Number(ageInput.value);
 
-        if (!age || age < 0 || age > 129) {
+        if (isNaN(age) || age < 0 || age > 129) {
           ageMessage.innerText = "Tuổi không hợp lệ. Hãy nhập từ 0 đến 129.";
           return;
         }
