@@ -598,7 +598,7 @@
             <input
               type="number"
               id="ageInput"
-              min="1"
+              min="0"
               max="129"
               placeholder="Nhập tuổi"
             />
@@ -1062,8 +1062,8 @@
         const ageMessage = document.getElementById("ageMessage");
         const age = Number(ageInput.value);
 
-        if (!age || age < 1 || age > 129) {
-          ageMessage.innerText = "Tuổi không hợp lệ. Hãy nhập từ 1 đến 129.";
+        if (!age || age < 0 || age > 129) {
+          ageMessage.innerText = "Tuổi không hợp lệ. Hãy nhập từ 0 đến 129.";
           return;
         }
 
