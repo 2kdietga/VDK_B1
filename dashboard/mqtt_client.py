@@ -15,6 +15,7 @@ latest_data = {
 }
 
 data_lock = threading.Lock()
+mqtt_lock = threading.Lock()
 
 # ===== HIVEMQ CLOUD =====
 BROKER = "23876fe7f57d410b9a0c41b405e675ec.s1.eu.hivemq.cloud"
@@ -26,6 +27,9 @@ TOPIC_DATA = "esp32/max30100/data"
 TOPIC_MOTOR_STATUS = "esp32/motor/status"
 TOPIC_MOTOR_MODE = "esp32/motor/mode"
 TOPIC_PROFILE_AGE = "esp32/profile/age"
+
+mqtt_client = None
+mqtt_started = False
 
 
 def on_connect(client, userdata, flags, rc, properties=None):
@@ -73,29 +77,38 @@ def on_message(client, userdata, msg):
 
 
 def start_mqtt():
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    global mqtt_client, mqtt_started
 
-    client.username_pw_set(USERNAME, PASSWORD)
+    with mqtt_lock:
+        if mqtt_started and mqtt_client is not None:
+            return mqtt_client
 
-    client.tls_set(tls_version=ssl.PROTOCOL_TLS)
-    client.tls_insecure_set(False)
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        client.username_pw_set(USERNAME, PASSWORD)
 
-    client.on_connect = on_connect
-    client.on_message = on_message
+        client.tls_set(tls_version=ssl.PROTOCOL_TLS)
+        client.tls_insecure_set(False)
 
-    client.connect(BROKER, PORT, 60)
+        client.on_connect = on_connect
+        client.on_message = on_message
 
-    thread = threading.Thread(target=client.loop_forever, daemon=True)
-    thread.start()
+        client.connect(BROKER, PORT, 60)
+        client.loop_start()
 
-    return client
+        mqtt_client = client
+        mqtt_started = True
+        print("MQTT background loop started")
 
-
-mqtt_client = start_mqtt()
+        return mqtt_client
 
 
 def publish_mode(mode: str):
+    global mqtt_client
+
     if mode not in ["AUTO", "SILENT"]:
+        return False
+
+    if mqtt_client is None:
         return False
 
     mqtt_client.publish(TOPIC_MOTOR_MODE, mode, retain=True)
@@ -107,10 +120,15 @@ def publish_mode(mode: str):
 
 
 def publish_age(age: int):
+    global mqtt_client
+
     if not isinstance(age, int):
         return False
 
     if age <= 0 or age >= 130:
+        return False
+
+    if mqtt_client is None:
         return False
 
     mqtt_client.publish(TOPIC_PROFILE_AGE, str(age), retain=True)
