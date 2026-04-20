@@ -353,21 +353,44 @@
         margin-bottom: 12px;
       }
 
-      .chart-scroll {
+      .chart-container {
+        display: flex;
+        align-items: stretch;
         width: 100%;
-        max-width: 100%;
+        min-width: 0;
+      }
+
+      .y-axis-fixed {
+        width: 64px;
+        min-width: 64px;
+        height: 300px;
+        border-right: 1px solid #e5e7eb;
+        background: #fff;
+        flex-shrink: 0;
+      }
+
+      .chart-scroll {
+        flex: 1;
+        min-width: 0;
         overflow-x: auto;
         overflow-y: hidden;
         padding-bottom: 8px;
       }
 
       .chart-inner {
+        position: relative;
         height: 300px;
         min-width: 100%;
       }
 
-      canvas {
+      .chart-main-canvas {
         display: block;
+        height: 300px !important;
+      }
+
+      .chart-axis-canvas {
+        display: block;
+        width: 64px !important;
         height: 300px !important;
       }
 
@@ -725,18 +748,32 @@
       <div class="charts">
         <div class="chart-box">
           <div class="chart-title">Biểu đồ nhịp tim</div>
-          <div class="chart-scroll" id="hrScroll">
-            <div class="chart-inner" id="hrChartWrap">
-              <canvas id="hrChart"></canvas>
+
+          <div class="chart-container">
+            <div class="y-axis-fixed">
+              <canvas id="hrYAxis" class="chart-axis-canvas"></canvas>
+            </div>
+
+            <div class="chart-scroll" id="hrScroll">
+              <div class="chart-inner" id="hrChartWrap">
+                <canvas id="hrChart" class="chart-main-canvas"></canvas>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="chart-box">
           <div class="chart-title">Biểu đồ SpO₂</div>
-          <div class="chart-scroll" id="spo2Scroll">
-            <div class="chart-inner" id="spo2ChartWrap">
-              <canvas id="spo2Chart"></canvas>
+
+          <div class="chart-container">
+            <div class="y-axis-fixed">
+              <canvas id="spo2YAxis" class="chart-axis-canvas"></canvas>
+            </div>
+
+            <div class="chart-scroll" id="spo2Scroll">
+              <div class="chart-inner" id="spo2ChartWrap">
+                <canvas id="spo2Chart" class="chart-main-canvas"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -780,10 +817,75 @@
         spo2ChartWrap.style.width = newWidth + "px";
       }
 
+      const commonMainOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+        elements: {
+          point: {
+            radius: 2,
+          },
+          line: {
+            tension: 0.3,
+            borderWidth: 2,
+          },
+        },
+        scales: {
+          x: {
+            ticks: {
+              maxRotation: 0,
+              autoSkip: true,
+            },
+            grid: {
+              display: true,
+            },
+          },
+        },
+      };
+
+      const commonAxisOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            enabled: false,
+          },
+        },
+        elements: {
+          point: {
+            radius: 0,
+          },
+          line: {
+            borderWidth: 0,
+          },
+        },
+        scales: {
+          x: {
+            display: false,
+            grid: {
+              display: false,
+              drawBorder: false,
+            },
+            border: {
+              display: false,
+            },
+          },
+        },
+      };
+
       const hrChart = new Chart(document.getElementById("hrChart"), {
         type: "line",
         data: {
-          labels: labels,
+          labels,
           datasets: [
             {
               label: "Heart Rate (BPM)",
@@ -794,18 +896,69 @@
           ],
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
+          ...commonMainOptions,
+          layout: {
+            padding: {
+              left: 0,
+              right: 8,
+              top: 8,
+              bottom: 0,
+            },
+          },
           scales: {
-            x: {
-              ticks: {
-                maxRotation: 0,
-                autoSkip: true,
+            ...commonMainOptions.scales,
+            y: {
+              display: false,
+              min: 0,
+              max: 160,
+              grid: {
+                drawBorder: false,
+              },
+              border: {
+                display: false,
               },
             },
+          },
+        },
+      });
+
+      const hrYAxis = new Chart(document.getElementById("hrYAxis"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              data: hrData,
+              borderWidth: 0,
+              pointRadius: 0,
+            },
+          ],
+        },
+        options: {
+          ...commonAxisOptions,
+          layout: {
+            padding: {
+              left: 0,
+              right: 6,
+              top: 8,
+              bottom: 0,
+            },
+          },
+          scales: {
+            ...commonAxisOptions.scales,
             y: {
+              min: 0,
+              max: 160,
               beginAtZero: true,
+              ticks: {
+                stepSize: 20,
+              },
+              grid: {
+                drawBorder: false,
+              },
+              border: {
+                display: false,
+              },
             },
           },
         },
@@ -814,7 +967,7 @@
       const spo2Chart = new Chart(document.getElementById("spo2Chart"), {
         type: "line",
         data: {
-          labels: labels,
+          labels,
           datasets: [
             {
               label: "SpO₂ (%)",
@@ -825,19 +978,68 @@
           ],
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
+          ...commonMainOptions,
+          layout: {
+            padding: {
+              left: 0,
+              right: 8,
+              top: 8,
+              bottom: 0,
+            },
+          },
           scales: {
-            x: {
-              ticks: {
-                maxRotation: 0,
-                autoSkip: true,
+            ...commonMainOptions.scales,
+            y: {
+              display: false,
+              min: 80,
+              max: 100,
+              grid: {
+                drawBorder: false,
+              },
+              border: {
+                display: false,
               },
             },
+          },
+        },
+      });
+
+      const spo2YAxis = new Chart(document.getElementById("spo2YAxis"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              data: spo2Data,
+              borderWidth: 0,
+              pointRadius: 0,
+            },
+          ],
+        },
+        options: {
+          ...commonAxisOptions,
+          layout: {
+            padding: {
+              left: 0,
+              right: 6,
+              top: 8,
+              bottom: 0,
+            },
+          },
+          scales: {
+            ...commonAxisOptions.scales,
             y: {
               min: 80,
               max: 100,
+              ticks: {
+                stepSize: 5,
+              },
+              grid: {
+                drawBorder: false,
+              },
+              border: {
+                display: false,
+              },
             },
           },
         },
@@ -998,7 +1200,10 @@
         updateChartWidth();
 
         hrChart.update();
+        hrYAxis.update();
+
         spo2Chart.update();
+        spo2YAxis.update();
 
         if (followHr) scrollToRight(hrScroll);
         if (followSpo2) scrollToRight(spo2Scroll);
