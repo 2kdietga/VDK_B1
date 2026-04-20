@@ -116,10 +116,12 @@ mqtt_client = start_mqtt()
 
 
 def publish_mode(mode: str):
-    if mode not in ["AUTO", "SILENT"]:
+    if mode not in ["AUTO", "SILENT", "ON", "OFF"]:
         return False
-
-    mqtt_client.publish(TOPIC_MOTOR_MODE, mode, retain=True)
+    if mode in ["ON", "OFF"]:
+        mqtt_client.publish(TOPIC_LED_MODE, mode, retain=True)
+    else:
+        mqtt_client.publish(TOPIC_MOTOR_MODE, mode, retain=True)
 
     with data_lock:
         latest_data["mode"] = mode
