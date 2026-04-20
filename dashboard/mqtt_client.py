@@ -43,6 +43,8 @@ def on_connect(client, userdata, flags, rc, properties=None):
         client.subscribe(TOPIC_MOTOR_MODE)
         client.subscribe(TOPIC_PROFILE_AGE)
         client.subscribe(TOPIC_STATUS)
+        client.subscribe(TOPIC_LED_MODE)
+        client.subscribe(TOPIC_LED_STATUS)
         print("Đã subscribe topic")
     else:
         print("MQTT connection failed with code:", rc)
