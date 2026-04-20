@@ -1028,11 +1028,13 @@
           document.getElementById("led").innerText = led;
           document.getElementById("hr").innerText = hr;
           document.getElementById("spo2").innerText = spo2;
-          document.getElementById("age").innerText = age || "...";
+          document.getElementById("age").innerText = Number.isNaN(age)
+            ? "..."
+            : age;
           document.getElementById("age_group").innerText = ageGroup;
 
           const ageInput = document.getElementById("ageInput");
-          if (age && document.activeElement !== ageInput) {
+          if (!Number.isNaN(age) && document.activeElement !== ageInput) {
             ageInput.value = age;
           }
 
